@@ -2,10 +2,10 @@ name: Generate cilium manifest from helm chart
 on:
   workflow_dispatch:
     inputs:
-      branch:
+      tag:
         description: "Branch of cilium/cilium to use"
         required: true
-        default: "main"
+        default: "latest"
 jobs:
   process_cilium:
     runs-on: ubuntu-latest
@@ -24,7 +24,7 @@ jobs:
         run: |
           git clone https://github.com/cilium/cilium.git
           cd cilium
-          git checkout ${{ github.event.inputs.branch }}
+          git checkout {{ github.event.inputs.tag }}
           echo '### Initialized cilium yaml bake!!' >> $GITHUB_STEP_SUMMARY
         shell: bash
 
@@ -52,12 +52,12 @@ jobs:
         run: |
           echo $GITHUB_WORKSPACE
           cd $GITHUB_WORKSPACE && mkdir -p result
-          mv /tmp/manifest.yaml result/cilium-${{ github.event.inputs.branch }}.yaml
+          mv /tmp/manifest.yaml result/cilium-${{ github.event.inputs.tag }}.yaml
 
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-          git add result/cilium-${{ github.event.inputs.branch }}.yaml
+          git add result/cilium-${{ github.event.inputs.tag }}.yaml
 
           git commit -m "Automated commit: Add generated manifest to result directory"
 
