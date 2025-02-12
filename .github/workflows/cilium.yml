@@ -1,4 +1,4 @@
-name: Automate Cilium Helm Workflow
+name: Generate cilium manifest from helm chart
 on:
   workflow_dispatch:
     inputs:
