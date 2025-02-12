@@ -24,7 +24,7 @@ jobs:
         run: |
           git clone https://github.com/cilium/cilium.git
           cd cilium
-          git checkout {{ github.event.inputs.tag }}
+          git checkout ${{ github.event.inputs.tag }}
           echo '### Initialized cilium yaml bake!!' >> $GITHUB_STEP_SUMMARY
         shell: bash
 
