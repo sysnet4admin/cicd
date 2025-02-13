@@ -1,4 +1,4 @@
-name: [tag:latest] Generate cilium manifest from helm chart
+name: Generate latest-cilium manifest from helm chart
 on:
   workflow_dispatch:
     inputs:
