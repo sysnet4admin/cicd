@@ -1,0 +1,77 @@
+name: Generate tag-latest-cilium manifest from helm chart
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Branch of cilium/cilium to use"
+        required: true
+        default: "main"
+
+# Define env at workflow level (available to all jobs)
+env:
+  TMP_MANIFEST_FILE: "/tmp/manifest.yaml"
+  OUT_DIR: "$GITHUB_WORKSPACE/manifests/cilium"
+  ENVIRONMENT: "production"
+
+jobs:
+  process_cilium:
+    runs-on: ubuntu-24.04
+    outputs:
+      summary: ${{ steps.generate_summary.outputs.summary_text }}
+    steps:
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.15.0
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set command output as environment variable
+        run: |
+          COMMAND_OUTPUT=$(curl -s https://api.github.com/repos/cilium/cilium/tags | jq -r '.[0].name')
+          echo "CILIUM_LATEST_VER=$COMMAND_OUTPUT" >> $GITHUB_ENV
+
+      - name: Clone cilium/cilium repository
+        run: |
+          git clone https://github.com/cilium/cilium.git
+          cd cilium
+          git checkout $CILIUM_LATEST_VER
+          echo '### Initialized cilium yaml bake!!' >> $GITHUB_STEP_SUMMARY
+        shell: bash
+
+      - name: Run shell scripts and generate Helm templates
+        run: |
+          cd cilium
+          find ./examples/crds/* -type f -exec cat {} + | awk 'NR==1{print "---"} {print} NR>1 && /^---$/{next}' > $TMP_MANIFEST_FILE
+          cd install/kubernetes
+          helm template cilium ./cilium \
+          --namespace=kube-system \
+          --set ipam.mode=kubernetes \
+          --set ipv4NativeRoutingCIDR="172.16.0.0/16" \
+          --set l2announcements.enabled=true \
+          --set kubeProxyReplacement=true \
+          --set externalIPs.enabled=true \
+          --set hubble.ui.enabled=true \
+          --set hubble.relay.enabled=true \
+          --set k8sServiceHost="192.168.1.10" \
+          --set k8sServicePort="6443" \
+          --set hubble.ui.frontend.server.ipv6.enabled=false >> $TMP_MANIFEST_FILE
+          echo '### Completed cilium crd with cilium daemonset and ecosystem' >> $GITHUB_STEP_SUMMARY
+        shell: bash
+
+      - name: Commit manifest to result directory
+        run: |
+          echo $GITHUB_WORKSPACE
+          mkdir -p $OUT_DIR
+          mv $TMP_MANIFEST_FILE $OUT_DIR/cilium-$CILIUM_LATEST_VER.yaml
+
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+          git add manifests/cilium/cilium-$CILIUM_LATEST_VER.yaml
+
+          git commit -m "Automated commit: Add generated manifest to result directory"
+
+          git push origin main
+        shell: bash
