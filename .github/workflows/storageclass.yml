@@ -1,0 +1,6 @@
+helm template nfs-provisioner . \
+    --set nfs.server=192.168.1.10 \
+    --set nfs.path=/nfs_shared/dynamic-vol \
+    --set storageClass.name=managed-nfs-storage \
+	--show-only 'templates/storageclass*' \
+    > /tmp/nfs-provisioner.yaml
