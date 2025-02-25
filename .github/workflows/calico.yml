@@ -1,4 +1,4 @@
-name: Change repo from docker.io to quay.io for calico 
+name: Get calico and Change repo from docker.io to quay.io  
 on:
   workflow_dispatch:
     inputs:
