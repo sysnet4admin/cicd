@@ -1,0 +1,48 @@
+name: Change repo from docker.io to quay.io for calico 
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "docker.io pull ratelimit 10/hour"
+        required: true
+        default: "main"
+jobs:
+  process_calico:
+    runs-on: ubuntu-24.04
+    outputs:
+      summary: ${{ steps.generate_summary.outputs.summary_text }}
+    steps:
+      # TBD for $CALICO_LATEST_VER (not used in here)
+      - name: Set command output as environment variable
+        run: |
+          COMMAND_OUTPUT=$(curl -s https://api.github.com/repos/projectcalico/calico/tags | jq -r '.[0].name')
+          echo "CALICO_LATEST_VER=$COMMAND_OUTPUT" >> $GITHUB_ENV
+
+      - name: Download calico-${{ github.event.inputs.tag }}.yaml 
+        run: | 
+          curl -L \
+          https://raw.githubusercontent.com/projectcalico/calico/refs/tags/${{ github.event.inputs.tag }}/manifests/calico.yaml \
+          -o calico-${{ github.event.inputs.tag }}.yaml
+          echo '### Download calico-${{ github.event.inputs.tag }}.yaml' >> $GITHUB_STEP_SUMMARY
+        shell: bash
+        
+      - name: Change repo from docker.io to quay.io
+        run: |
+          sed -i 's|docker.io/calico|quay.io/calico|g' calico-${{ github.event.inputs.tag }}.yaml
+          echo '### Change repo from docker.io to quay.io' >> $GITHUB_STEP_SUMMARY
+        shell: bash
+
+      - name: Commit manifest to result directory
+        run: |
+          echo $GITHUB_WORKSPACE
+          cd $GITHUB_WORKSPACE && mkdir -p manifests/calico
+          mv ~/calico-${{ github.event.inputs.tag }}.yaml manifests/calico/
+
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+          git add manifests/calico/calico-${{ github.event.inputs.tag }}.yaml
+          git commit -m "Automated commit: Add generated manifest to result directory"
+          git push origin main
+          
+        shell: bash
