@@ -22,13 +22,13 @@ jobs:
         run: | 
           curl -L \
           https://raw.githubusercontent.com/projectcalico/calico/refs/tags/${{ github.event.inputs.tag }}/manifests/calico.yaml \
-          -o calico-${{ github.event.inputs.tag }}.yaml
+          -o /tmp/calico-${{ github.event.inputs.tag }}.yaml
           echo '### Download calico-${{ github.event.inputs.tag }}.yaml' >> $GITHUB_STEP_SUMMARY
         shell: bash
         
       - name: Change repo from docker.io to quay.io
         run: |
-          sed -i 's|docker.io/calico|quay.io/calico|g' calico-${{ github.event.inputs.tag }}.yaml
+          sed -i 's|docker.io/calico|quay.io/calico|g' /tmp/calico-${{ github.event.inputs.tag }}.yaml
           echo '### Change repo from docker.io to quay.io' >> $GITHUB_STEP_SUMMARY
         shell: bash
 
@@ -36,7 +36,7 @@ jobs:
         run: |
           echo $GITHUB_WORKSPACE
           cd $GITHUB_WORKSPACE && mkdir -p manifests/calico
-          mv ~/calico-${{ github.event.inputs.tag }}.yaml manifests/calico/
+          mv /tmp/calico-${{ github.event.inputs.tag }}.yaml manifests/calico/
 
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
