@@ -12,6 +12,9 @@ jobs:
     outputs:
       summary: ${{ steps.generate_summary.outputs.summary_text }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       # TBD for $CALICO_LATEST_VER (not used in here)
       - name: Set command output as environment variable
         run: |
