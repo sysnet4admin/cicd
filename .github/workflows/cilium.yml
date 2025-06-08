@@ -48,16 +48,16 @@ jobs:
           echo '### Completed cilium crd with cilium daemonset and ecosystem' >> $GITHUB_STEP_SUMMARY
         shell: bash
 
-      - name: Commit manifest to result directory
+      - name: Commit manifest to manifests directory
         run: |
           echo $GITHUB_WORKSPACE
-          cd $GITHUB_WORKSPACE && mkdir -p result
-          mv /tmp/manifest.yaml result/cilium-${{ github.event.inputs.tag }}.yaml
+          cd $GITHUB_WORKSPACE && mkdir -p manifests/cilium
+          mv /tmp/manifest.yaml manifests/cilium/cilium-${{ github.event.inputs.tag }}.yaml
 
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-          git add result/cilium-${{ github.event.inputs.tag }}.yaml
+          git add manifests/cilium/cilium-${{ github.event.inputs.tag }}.yaml
 
           git commit -m "Automated commit: Add generated manifest to result directory"
 
